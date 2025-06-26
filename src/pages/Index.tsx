@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from "@/components/ui/navigation-menu";
-import { MapPin, Calendar, Bell, MessageSquare, Clock } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { MapPin, Calendar, Bell, MessageSquare, Clock, Menu } from "lucide-react";
 import MapComponent from "@/components/MapComponent";
 import ScheduleViewer from "@/components/ScheduleViewer";
 import FacultyDirectory from "@/components/FacultyDirectory";
@@ -16,19 +16,60 @@ import FeedbackSystem from "@/components/FeedbackSystem";
 const Index = () => {
   const [activeTab, setActiveTab] = useState("map");
 
+  const navigationItems = [
+    { id: "map", label: "Maps", icon: MapPin },
+    { id: "schedule", label: "Schedule", icon: Calendar },
+    { id: "faculty", label: "Faculty", icon: Clock },
+    { id: "notifications", label: "Alerts", icon: Bell },
+    { id: "appointments", label: "Appointments", icon: Clock },
+    { id: "feedback", label: "Feedback", icon: MessageSquare },
+  ];
+
+  const MobileNavigation = () => (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline" size="icon" className="md:hidden">
+          <Menu className="h-4 w-4" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-64">
+        <div className="mt-6 space-y-4">
+          <h2 className="text-lg font-semibold">Navigation</h2>
+          <div className="space-y-2">
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Button
+                  key={item.id}
+                  variant={activeTab === item.id ? "default" : "ghost"}
+                  className="w-full justify-start text-left"
+                  onClick={() => setActiveTab(item.id)}
+                >
+                  <Icon className="mr-3 h-4 w-4" />
+                  {item.label}
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card shadow-sm">
-        <div className="container mx-auto px-4 py-4">
+      {/* Mobile-Optimized Header */}
+      <header className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/75 shadow-sm">
+        <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
+              <MobileNavigation />
               <div className="bg-primary text-primary-foreground rounded-lg p-2">
-                <MapPin className="h-6 w-6" />
+                <MapPin className="h-5 w-5 md:h-6 md:w-6" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">CampusFlow</h1>
-                <p className="text-sm text-muted-foreground">Your Campus Compass Guide</p>
+                <h1 className="text-lg md:text-2xl font-bold">CampusFlow</h1>
+                <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Your Campus Compass Guide</p>
               </div>
             </div>
             <NotificationCenter />
@@ -36,179 +77,155 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Navigation */}
-      <NavigationMenu className="container mx-auto px-4 py-2">
-        <NavigationMenuList>
-          <NavigationMenuItem>
-            <NavigationMenuTrigger>Quick Access</NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <div className="grid gap-3 p-6 w-[400px]">
-                <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setActiveTab("map")}>
-                    <MapPin className="mr-2 h-4 w-4" />
-                    Maps
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setActiveTab("schedule")}>
-                    <Calendar className="mr-2 h-4 w-4" />
-                    Schedule
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setActiveTab("faculty")}>
-                    <Clock className="mr-2 h-4 w-4" />
-                    Faculty
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setActiveTab("appointments")}>
-                    <Bell className="mr-2 h-4 w-4" />
-                    Appointments
-                  </Button>
-                </div>
-              </div>
-            </NavigationMenuContent>
-          </NavigationMenuItem>
-        </NavigationMenuList>
-      </NavigationMenu>
-
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-6">
+      {/* Main Content with Mobile-First Design */}
+      <main className="container mx-auto px-4 py-4 md:py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="map" className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              Maps
-            </TabsTrigger>
-            <TabsTrigger value="schedule" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Schedule
-            </TabsTrigger>
-            <TabsTrigger value="faculty" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Faculty
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex items-center gap-2">
-              <Bell className="h-4 w-4" />
-              Alerts
-            </TabsTrigger>
-            <TabsTrigger value="appointments" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Appointments
-            </TabsTrigger>
-            <TabsTrigger value="feedback" className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              Feedback
-            </TabsTrigger>
-          </TabsList>
+          {/* Mobile: Horizontal Scrollable Tabs */}
+          <div className="md:hidden mb-6">
+            <TabsList className="flex w-full overflow-x-auto scrollbar-hide">
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <TabsTrigger
+                    key={item.id}
+                    value={item.id}
+                    className="flex-shrink-0 px-4 py-2 flex flex-col items-center gap-1 min-w-[80px]"
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="text-xs">{item.label}</span>
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+          </div>
 
-          <TabsContent value="map" className="mt-6">
+          {/* Desktop: Standard Grid Layout */}
+          <div className="hidden md:block mb-6">
+            <TabsList className="grid w-full grid-cols-6">
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <TabsTrigger key={item.id} value={item.id} className="flex items-center gap-2">
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+          </div>
+
+          <TabsContent value="map" className="mt-0">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
                   <MapPin className="h-5 w-5" />
                   Interactive Campus Map
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-sm">
                   Navigate your campus with real-time GPS and detailed building layouts
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 md:p-6">
                 <MapComponent />
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="schedule" className="mt-6">
+          <TabsContent value="schedule" className="mt-0">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
                   <Calendar className="h-5 w-5" />
                   Academic Schedule
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-sm">
                   View your classes and quickly navigate to locations
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 md:p-6">
                 <ScheduleViewer />
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="faculty" className="mt-6">
+          <TabsContent value="faculty" className="mt-0">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
                   <Clock className="h-5 w-5" />
                   Faculty & Office Directory
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-sm">
                   Check availability and locate faculty offices
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 md:p-6">
                 <FacultyDirectory />
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="notifications" className="mt-6">
+          <TabsContent value="notifications" className="mt-0">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
                   <Bell className="h-5 w-5" />
                   Notifications & Alerts
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-sm">
                   Stay updated with campus events and important announcements
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 md:p-6">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h4 className="font-semibold">Library Hours Extended</h4>
-                      <p className="text-sm text-muted-foreground">Open until midnight during finals week</p>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-sm md:text-base">Library Hours Extended</h4>
+                      <p className="text-sm text-muted-foreground mt-1">Open until midnight during finals week</p>
                     </div>
-                    <Badge variant="secondary">New</Badge>
+                    <Badge variant="secondary" className="ml-2 flex-shrink-0">New</Badge>
                   </div>
                   <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h4 className="font-semibold">Campus Event: Tech Fair</h4>
-                      <p className="text-sm text-muted-foreground">Tomorrow at Student Center, 2:00 PM</p>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-sm md:text-base">Campus Event: Tech Fair</h4>
+                      <p className="text-sm text-muted-foreground mt-1">Tomorrow at Student Center, 2:00 PM</p>
                     </div>
-                    <Badge variant="outline">Event</Badge>
+                    <Badge variant="outline" className="ml-2 flex-shrink-0">Event</Badge>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="appointments" className="mt-6">
+          <TabsContent value="appointments" className="mt-0">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
                   <Clock className="h-5 w-5" />
                   Appointment Scheduling
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-sm">
                   Schedule meetings with faculty, medical staff, and administration
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 md:p-6">
                 <AppointmentScheduler />
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="feedback" className="mt-6">
+          <TabsContent value="feedback" className="mt-0">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
                   <MessageSquare className="h-5 w-5" />
                   Feedback & Reporting
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-sm">
                   Help us improve campus services and report issues
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 md:p-6">
                 <FeedbackSystem />
               </CardContent>
             </Card>

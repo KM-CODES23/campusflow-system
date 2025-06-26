@@ -48,7 +48,7 @@ const NotificationCenter = () => {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="icon" className="relative">
+        <Button variant="outline" size="icon" className="relative touch-manipulation">
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
             <Badge 
@@ -60,25 +60,27 @@ const NotificationCenter = () => {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
+      <PopoverContent className="w-80 md:w-96 p-0" align="end">
         <div className="border-b p-4">
-          <h3 className="font-semibold">Notifications</h3>
+          <h3 className="font-semibold text-base">Notifications</h3>
           <p className="text-sm text-muted-foreground">
             {unreadCount} unread notifications
           </p>
         </div>
-        <ScrollArea className="h-80">
+        <ScrollArea className="h-64 md:h-80">
           <div className="p-4 space-y-3">
             {notifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-3 rounded-lg border ${!notification.read ? 'bg-muted/50' : ''}`}
+                className={`p-3 rounded-lg border transition-colors active:bg-muted/30 ${
+                  !notification.read ? 'bg-muted/50' : ''
+                }`}
               >
                 <div className="flex items-start gap-3">
-                  <div className={`w-2 h-2 rounded-full mt-2 ${getTypeColor(notification.type)}`} />
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium">{notification.title}</p>
-                    <p className="text-sm text-muted-foreground">{notification.message}</p>
+                  <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${getTypeColor(notification.type)}`} />
+                  <div className="flex-1 space-y-1 min-w-0">
+                    <p className="text-sm font-medium leading-tight">{notification.title}</p>
+                    <p className="text-sm text-muted-foreground leading-tight">{notification.message}</p>
                     <p className="text-xs text-muted-foreground">{notification.time}</p>
                   </div>
                 </div>

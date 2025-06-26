@@ -1,22 +1,23 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { MapPin, Calendar, Bell, MessageSquare, Clock, Menu } from "lucide-react";
+import { MapPin, Calendar, Bell, MessageSquare, Clock, Menu, LayoutDashboard } from "lucide-react";
 import MapComponent from "@/components/MapComponent";
 import ScheduleViewer from "@/components/ScheduleViewer";
 import FacultyDirectory from "@/components/FacultyDirectory";
 import NotificationCenter from "@/components/NotificationCenter";
 import AppointmentScheduler from "@/components/AppointmentScheduler";
 import FeedbackSystem from "@/components/FeedbackSystem";
+import Dashboard from "@/components/Dashboard";
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState("map");
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   const navigationItems = [
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "map", label: "Maps", icon: MapPin },
     { id: "schedule", label: "Schedule", icon: Calendar },
     { id: "faculty", label: "Faculty", icon: Clock },
@@ -101,7 +102,7 @@ const Index = () => {
 
           {/* Desktop: Standard Grid Layout */}
           <div className="hidden md:block mb-6">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-7">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -113,6 +114,10 @@ const Index = () => {
               })}
             </TabsList>
           </div>
+
+          <TabsContent value="dashboard" className="mt-0">
+            <Dashboard />
+          </TabsContent>
 
           <TabsContent value="map" className="mt-0">
             <Card>

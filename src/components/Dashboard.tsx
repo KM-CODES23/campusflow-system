@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -182,13 +181,14 @@ const Dashboard = () => {
             </CardTitle>
             <CardDescription>Your upcoming classes and activities</CardDescription>
           </CardHeader>
+          
           <CardContent className="space-y-3">
             {upcomingClasses.map((classItem, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
                     <div className="text-sm font-medium text-primary">{classItem.time}</div>
-                    <Badge variant="outline" size="sm">Upcoming</Badge>
+                    <Badge variant="outline">Upcoming</Badge>
                   </div>
                   <h4 className="font-medium mt-1">{classItem.subject}</h4>
                   <p className="text-sm text-muted-foreground">{classItem.location}</p>

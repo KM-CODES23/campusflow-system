@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +13,7 @@ import NotificationCenter from "@/components/NotificationCenter";
 import AppointmentScheduler from "@/components/AppointmentScheduler";
 import FeedbackSystem from "@/components/FeedbackSystem";
 import Dashboard from "@/components/Dashboard";
+import ChatBot from "@/components/ChatBot";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -237,6 +239,9 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* AI Chatbot Component */}
+      <ChatBot />
     </div>
   );
 };

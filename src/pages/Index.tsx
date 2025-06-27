@@ -10,6 +10,7 @@ import MapComponent from "@/components/MapComponent";
 import ScheduleViewer from "@/components/ScheduleViewer";
 import FacultyDirectory from "@/components/FacultyDirectory";
 import NotificationCenter from "@/components/NotificationCenter";
+import ProfileMenu from "@/components/ProfileMenu";
 import AppointmentScheduler from "@/components/AppointmentScheduler";
 import FeedbackSystem from "@/components/FeedbackSystem";
 import Dashboard from "@/components/Dashboard";
@@ -75,7 +76,10 @@ const Index = () => {
                 <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Your Campus Compass Guide</p>
               </div>
             </div>
-            <NotificationCenter />
+            <div className="flex items-center space-x-2">
+              <NotificationCenter />
+              <ProfileMenu />
+            </div>
           </div>
         </div>
       </header>

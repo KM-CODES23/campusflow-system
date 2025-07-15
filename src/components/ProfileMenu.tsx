@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
@@ -15,37 +15,146 @@ import {
   DialogDescription, 
   DialogHeader, 
   DialogTitle, 
-  DialogTrigger 
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { User, Settings, LogOut, Edit } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+
+interface ProfileData {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+}
 
 const ProfileMenu = () => {
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [profile, setProfile] = useState({
-    name: "Alex Johnson",
-    email: "alex.johnson@university.edu",
-    studentId: "ST2024001",
-    major: "Computer Science",
-    year: "Junior",
-    bio: "Passionate about technology and learning new things every day.",
-    avatar: "https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=100&h=100&fit=crop&crop=face"
+  const [isLoading, setIsLoading] = useState(false);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [editProfile, setEditProfile] = useState<{ full_name: string; avatar_url: string }>({
+    full_name: "",
+    avatar_url: ""
   });
 
-  const [editProfile, setEditProfile] = useState(profile);
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
 
-  const handleSaveProfile = () => {
-    setProfile(editProfile);
-    setIsEditOpen(false);
+  const fetchProfile = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return;
+      }
+
+      setProfile(data);
+      setEditProfile({
+        full_name: data.full_name || "",
+        avatar_url: data.avatar_url || ""
+      });
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user || !profile) return;
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: editProfile.full_name,
+          avatar_url: editProfile.avatar_url,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to update profile. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setProfile({
+        ...profile,
+        full_name: editProfile.full_name,
+        avatar_url: editProfile.avatar_url
+      });
+
+      toast({
+        title: "Success",
+        description: "Profile updated successfully!",
+      });
+
+      setIsEditOpen(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancelEdit = () => {
-    setEditProfile(profile);
+    if (profile) {
+      setEditProfile({
+        full_name: profile.full_name || "",
+        avatar_url: profile.avatar_url || ""
+      });
+    }
     setIsEditOpen(false);
   };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate('/auth');
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (!user || !profile) {
+    return null;
+  }
+
+  const displayName = profile.full_name || "User";
+  const displayEmail = profile.email || user.email || "";
 
   return (
     <>
@@ -53,7 +162,7 @@ const ProfileMenu = () => {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={profile.avatar} alt={profile.name} />
+              <AvatarImage src={profile.avatar_url || ""} alt={displayName} />
               <AvatarFallback>
                 <User className="h-5 w-5" />
               </AvatarFallback>
@@ -63,9 +172,9 @@ const ProfileMenu = () => {
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <div className="flex items-center justify-start gap-2 p-2">
             <div className="flex flex-col space-y-1 leading-none">
-              <p className="font-medium">{profile.name}</p>
+              <p className="font-medium">{displayName}</p>
               <p className="w-[200px] truncate text-sm text-muted-foreground">
-                {profile.email}
+                {displayEmail}
               </p>
             </div>
           </div>
@@ -83,7 +192,7 @@ const ProfileMenu = () => {
             Settings
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-red-600">
+          <DropdownMenuItem className="text-red-600" onClick={handleSignOut}>
             <LogOut className="mr-2 h-4 w-4" />
             Sign Out
           </DropdownMenuItem>
@@ -102,26 +211,14 @@ const ProfileMenu = () => {
           <div className="space-y-6">
             <div className="flex items-center space-x-4">
               <Avatar className="h-20 w-20">
-                <AvatarImage src={profile.avatar} alt={profile.name} />
+                <AvatarImage src={profile.avatar_url || ""} alt={displayName} />
                 <AvatarFallback>
                   <User className="h-8 w-8" />
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h3 className="text-lg font-semibold">{profile.name}</h3>
-                <p className="text-sm text-muted-foreground">{profile.studentId}</p>
-                <p className="text-sm text-muted-foreground">{profile.major} • {profile.year}</p>
-              </div>
-            </div>
-            
-            <div className="space-y-3">
-              <div>
-                <Label className="text-sm font-medium">Email</Label>
-                <p className="text-sm text-muted-foreground">{profile.email}</p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium">About</Label>
-                <p className="text-sm text-muted-foreground">{profile.bio}</p>
+                <h3 className="text-lg font-semibold">{displayName}</h3>
+                <p className="text-sm text-muted-foreground">{displayEmail}</p>
               </div>
             </div>
 
@@ -152,81 +249,41 @@ const ProfileMenu = () => {
           <div className="space-y-4">
             <div className="flex items-center space-x-4">
               <Avatar className="h-16 w-16">
-                <AvatarImage src={editProfile.avatar} alt={editProfile.name} />
+                <AvatarImage src={editProfile.avatar_url} alt={displayName} />
                 <AvatarFallback>
                   <User className="h-6 w-6" />
                 </AvatarFallback>
               </Avatar>
-              <Button variant="outline" size="sm">
-                Change Photo
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  value={editProfile.name}
-                  onChange={(e) => setEditProfile({...editProfile, name: e.target.value})}
-                />
-              </div>
-              <div>
-                <Label htmlFor="studentId">Student ID</Label>
-                <Input
-                  id="studentId"
-                  value={editProfile.studentId}
-                  onChange={(e) => setEditProfile({...editProfile, studentId: e.target.value})}
-                />
-              </div>
             </div>
 
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="full_name">Full Name</Label>
               <Input
-                id="email"
-                type="email"
-                value={editProfile.email}
-                onChange={(e) => setEditProfile({...editProfile, email: e.target.value})}
+                id="full_name"
+                value={editProfile.full_name}
+                onChange={(e) => setEditProfile({...editProfile, full_name: e.target.value})}
+                disabled={isLoading}
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="major">Major</Label>
-                <Input
-                  id="major"
-                  value={editProfile.major}
-                  onChange={(e) => setEditProfile({...editProfile, major: e.target.value})}
-                />
-              </div>
-              <div>
-                <Label htmlFor="year">Academic Year</Label>
-                <Input
-                  id="year"
-                  value={editProfile.year}
-                  onChange={(e) => setEditProfile({...editProfile, year: e.target.value})}
-                />
-              </div>
-            </div>
-
             <div>
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea
-                id="bio"
-                placeholder="Tell us about yourself..."
-                value={editProfile.bio}
-                onChange={(e) => setEditProfile({...editProfile, bio: e.target.value})}
-                rows={3}
+              <Label htmlFor="avatar_url">Avatar URL</Label>
+              <Input
+                id="avatar_url"
+                type="url"
+                placeholder="https://example.com/avatar.jpg"
+                value={editProfile.avatar_url}
+                onChange={(e) => setEditProfile({...editProfile, avatar_url: e.target.value})}
+                disabled={isLoading}
               />
             </div>
 
             <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={handleCancelEdit}>
+              <Button variant="outline" onClick={handleCancelEdit} disabled={isLoading}>
                 Cancel
               </Button>
-              <Button onClick={handleSaveProfile}>
-                Save Changes
+              <Button onClick={handleSaveProfile} disabled={isLoading}>
+                {isLoading ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </div>

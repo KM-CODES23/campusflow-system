@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MapPin, Calendar, Bell, MessageSquare, Clock, Menu, LayoutDashboard, LogIn } from "lucide-react";
+import Logo from "@/assets/imgs/logobg.png";
 import { useAuth } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import MapComponent from "@/components/MapComponent";
@@ -29,8 +30,8 @@ const Index = () => {
         <Card className="w-full max-w-md text-center">
           <CardHeader>
             <div className="flex justify-center mb-4">
-              <div className="bg-primary text-primary-foreground rounded-lg p-3">
-                <MapPin className="h-6 w-6" />
+              <div>
+                <img src={Logo} alt="Logo" />
               </div>
             </div>
             <CardTitle className="text-2xl">Welcome to CampusFlow</CardTitle>
@@ -96,18 +97,15 @@ const Index = () => {
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
         {/* Mobile-Optimized Header */}
-        <header className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/75 shadow-sm">
+        <header className="sticky top-0 z-50 border-b bg-card/100 backdrop-blur supports-[backdrop-filter]:bg-card/75 shadow-sm">
           <div className="container mx-auto px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <MobileNavigation />
-                <div className="bg-primary text-primary-foreground rounded-lg p-2">
-                  <MapPin className="h-5 w-5 md:h-6 md:w-6" />
-                </div>
                 <div>
-                  <h1 className="text-lg md:text-2xl font-bold">CampusFlow</h1>
-                  <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Your Campus Compass Guide</p>
+                  <img src={Logo} alt="CampusFlow Logo" className="h-8 w-auto" />
                 </div>
+                
               </div>
               <div className="flex items-center space-x-2">
                 <NotificationCenter />
@@ -121,23 +119,7 @@ const Index = () => {
         <main className="container mx-auto px-4 py-4 md:py-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             {/* Mobile: Horizontal Scrollable Tabs */}
-            <div className="md:hidden mb-6">
-              <TabsList className="flex w-full overflow-x-auto scrollbar-hide">
-                {navigationItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <TabsTrigger
-                      key={item.id}
-                      value={item.id}
-                      className="flex-shrink-0 px-4 py-2 flex flex-col items-center gap-1 min-w-[80px]"
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span className="text-xs">{item.label}</span>
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
-            </div>
+            
 
             {/* Desktop: Standard Grid Layout */}
             <div className="hidden md:block mb-6">
@@ -162,7 +144,9 @@ const Index = () => {
               <Card>
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-                    <MapPin className="h-5 w-5" />
+                    
+                  <img src={Logo} alt="CampusFlow Logo" className="h-8 w-auto" />
+                
                     Interactive Campus Map
                   </CardTitle>
                   <CardDescription className="text-sm">

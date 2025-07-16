@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import Logo from "@/assets/imgs/logobg.png"; // Adjust the path as necessary
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -153,11 +154,11 @@ const Auth = () => {
         <Card>
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <div className="bg-primary text-primary-foreground rounded-lg p-3">
-                <MapPin className="h-6 w-6" />
+              <div>
+                <img src={Logo} alt="Logo" />
               </div>
             </div>
-            <CardTitle className="text-2xl">CampusFlow</CardTitle>
+           
             <CardDescription>
               Your Campus Compass Guide
             </CardDescription>

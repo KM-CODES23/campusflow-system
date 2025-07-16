@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Feedback = Tables<"feedback">;
+type BadgeVariant = "default" | "destructive" | "secondary" | "outline";
 
 const FeedbackSystem = () => {
   const { user } = useAuth();
@@ -38,9 +38,9 @@ const FeedbackSystem = () => {
   ];
 
   const priorities = [
-    { value: "low", label: "Low", color: "secondary" },
-    { value: "medium", label: "Medium", color: "default" },
-    { value: "high", label: "High", color: "destructive" }
+    { value: "low", label: "Low", color: "secondary" as BadgeVariant },
+    { value: "medium", label: "Medium", color: "default" as BadgeVariant },
+    { value: "high", label: "High", color: "destructive" as BadgeVariant }
   ];
 
   useEffect(() => {
@@ -142,7 +142,7 @@ const FeedbackSystem = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): BadgeVariant => {
     switch (status) {
       case 'under_review':
         return 'secondary';
@@ -155,7 +155,7 @@ const FeedbackSystem = () => {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: string): BadgeVariant => {
     const priorityItem = priorities.find(p => p.value === priority);
     return priorityItem?.color || 'default';
   };

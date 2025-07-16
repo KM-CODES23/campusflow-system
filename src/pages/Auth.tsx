@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import Logo from "@/assets/imgs/logobg.png"; // Adjust the path as necessary
+import Logo from "@/assets/imgs/logobg.png";
+import BackgroundSlideshow from "@/components/BackgroundSlideshow";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -149,23 +149,24 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <Card>
+    <div className="min-h-screen relative flex items-center justify-center p-4">
+      <BackgroundSlideshow />
+      <div className="w-full max-w-md relative z-10">
+        <Card className="backdrop-blur-sm bg-background/95 border border-white/20 shadow-2xl">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
               <div>
-                <img src={Logo} alt="Logo" />
+                <img src={Logo} alt="Logo" className="h-16 w-auto" />
               </div>
             </div>
            
-            <CardDescription>
+            <CardDescription className="text-foreground/90">
               Your Campus Compass Guide
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-2 bg-background/50">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
               </TabsList>
@@ -182,6 +183,7 @@ const Auth = () => {
                       onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                       required
                       disabled={isLoading}
+                      className="bg-background/80 backdrop-blur-sm"
                     />
                   </div>
                   <div className="space-y-2">
@@ -195,6 +197,7 @@ const Auth = () => {
                         onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                         required
                         disabled={isLoading}
+                        className="bg-background/80 backdrop-blur-sm"
                       />
                       <Button
                         type="button"
@@ -241,6 +244,7 @@ const Auth = () => {
                       onChange={(e) => setSignupData({ ...signupData, fullName: e.target.value })}
                       required
                       disabled={isLoading}
+                      className="bg-background/80 backdrop-blur-sm"
                     />
                   </div>
                   <div className="space-y-2">
@@ -253,6 +257,7 @@ const Auth = () => {
                       onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
                       required
                       disabled={isLoading}
+                      className="bg-background/80 backdrop-blur-sm"
                     />
                   </div>
                   <div className="space-y-2">
@@ -267,6 +272,7 @@ const Auth = () => {
                         required
                         minLength={6}
                         disabled={isLoading}
+                        className="bg-background/80 backdrop-blur-sm"
                       />
                       <Button
                         type="button"
@@ -294,6 +300,7 @@ const Auth = () => {
                       onChange={(e) => setSignupData({ ...signupData, confirmPassword: e.target.value })}
                       required
                       disabled={isLoading}
+                      className="bg-background/80 backdrop-blur-sm"
                     />
                   </div>
                   <Button 

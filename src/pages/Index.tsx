@@ -18,6 +18,8 @@ import AppointmentScheduler from "@/components/AppointmentScheduler";
 import FeedbackSystem from "@/components/FeedbackSystem";
 import Dashboard from "@/components/Dashboard";
 import ChatBot from "@/components/ChatBot";
+import PWAInstallButton from "@/components/PWAInstallButton";
+import PushNotificationToggle from "@/components/PushNotificationToggle";
 
 const Index = () => {
   const { user } = useAuth();
@@ -105,9 +107,10 @@ const Index = () => {
                 <div>
                   <img src={Logo} alt="CampusFlow Logo" className="h-8 w-auto" />
                 </div>
-                
               </div>
               <div className="flex items-center space-x-2">
+                <PWAInstallButton />
+                <PushNotificationToggle />
                 <NotificationCenter />
                 <ProfileMenu />
               </div>
@@ -118,9 +121,6 @@ const Index = () => {
         {/* Main Content with Mobile-First Design */}
         <main className="container mx-auto px-4 py-4 md:py-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            {/* Mobile: Horizontal Scrollable Tabs */}
-            
-
             {/* Desktop: Standard Grid Layout */}
             <div className="hidden md:block mb-6">
               <TabsList className="grid w-full grid-cols-7">
@@ -144,9 +144,7 @@ const Index = () => {
               <Card>
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-                    
-                  <img src={Logo} alt="CampusFlow Logo" className="h-8 w-auto" />
-                
+                    <img src={Logo} alt="CampusFlow Logo" className="h-8 w-auto" />
                     Interactive Campus Map
                   </CardTitle>
                   <CardDescription className="text-sm">

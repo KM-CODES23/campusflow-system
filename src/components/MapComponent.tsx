@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Navigation } from "lucide-react";
+import GoogleMap from "./GoogleMap";
 
 const MapComponent = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,26 +45,9 @@ const MapComponent = () => {
 
       {/* Mobile-First Layout */}
       <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-3 lg:gap-6">
-        {/* Interactive Map - Full Width on Mobile */}
+        {/* Interactive Map with Google Maps */}
         <div className="lg:col-span-2">
-          <Card>
-            <CardContent className="p-0">
-              <div className="relative bg-gradient-to-br from-green-100 to-blue-100 h-64 md:h-80 lg:h-96 rounded-lg flex items-center justify-center touch-manipulation">
-                <div className="text-center space-y-3 md:space-y-4 px-4">
-                  <MapPin className="h-12 w-12 md:h-16 md:w-16 mx-auto text-primary" />
-                  <div>
-                    <h3 className="text-lg md:text-xl font-semibold">Interactive Campus Map</h3>
-                    <p className="text-sm md:text-base text-muted-foreground">GPS navigation and building layouts</p>
-                  </div>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    <Badge variant="secondary" className="text-xs">Indoor Navigation</Badge>
-                    <Badge variant="secondary" className="text-xs">Real-time GPS</Badge>
-                    <Badge variant="secondary" className="text-xs">Room Finder</Badge>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <GoogleMap />
         </div>
 
         {/* Building Directory - Optimized for Mobile */}

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,11 +8,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import type { Tables } from "@/integrations/supabase/types";
+
+type Appointment = Tables<"appointments">;
 
 const AppointmentScheduler = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedService, setSelectedService] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
+  const [purpose, setPurpose] = useState("");
 
   const services = [
     { id: "faculty", name: "Faculty Meeting", description: "Meet with professors and lecturers" },
@@ -27,31 +38,116 @@ const AppointmentScheduler = () => {
     "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM"
   ];
 
-  const upcomingAppointments = [
-    {
-      id: 1,
-      service: "Faculty Meeting",
-      date: "2024-06-28",
-      time: "10:00 AM",
-      with: "Dr. Sarah Smith",
-      location: "SCI Building, Room 301",
-      status: "confirmed"
-    },
-    {
-      id: 2,
-      service: "Medical Consultation",
-      date: "2024-06-29",
-      time: "02:30 PM",
-      with: "Dr. Michael Chen",
-      location: "Medical Center",
-      status: "pending"
+  useEffect(() => {
+    if (user) {
+      fetchAppointments();
     }
-  ];
+  }, [user]);
 
-  const handleScheduleAppointment = () => {
-    console.log("Scheduling appointment:", { selectedService, selectedDate, selectedTime });
-    // Here you would normally send the data to your backend
+  const fetchAppointments = async () => {
+    if (!user) return;
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('appointment_date', { ascending: true });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch appointments",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setAppointments(data || []);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const handleScheduleAppointment = async () => {
+    if (!user || !selectedService || !selectedDate || !selectedTime) return;
+
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .insert({
+          user_id: user.id,
+          service_type: selectedService,
+          appointment_date: selectedDate,
+          appointment_time: selectedTime,
+          purpose: purpose || null,
+          status: 'pending'
+        });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to schedule appointment",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Success",
+        description: "Appointment scheduled successfully!",
+      });
+
+      // Reset form
+      setSelectedService("");
+      setSelectedDate("");
+      setSelectedTime("");
+      setPurpose("");
+      
+      fetchAppointments();
+    } catch (error) {
+      console.error('Error scheduling appointment:', error);
+    }
+  };
+
+  const handleReschedule = async (appointmentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'rescheduled' })
+        .eq('id', appointmentId);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to reschedule appointment",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Success",
+        description: "Appointment marked for rescheduling",
+      });
+
+      fetchAppointments();
+    } catch (error) {
+      console.error('Error rescheduling appointment:', error);
+    }
+  };
+
+  const getServiceName = (serviceId: string) => {
+    const service = services.find(s => s.id === serviceId);
+    return service ? service.name : serviceId;
+  };
+
+  if (isLoading) {
+    return <div className="text-center py-8">Loading appointments...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -113,6 +209,8 @@ const AppointmentScheduler = () => {
             <Textarea
               placeholder="Briefly describe the purpose of your appointment..."
               className="min-h-20"
+              value={purpose}
+              onChange={(e) => setPurpose(e.target.value)}
             />
           </div>
 
@@ -129,38 +227,55 @@ const AppointmentScheduler = () => {
       {/* Upcoming Appointments */}
       <Card>
         <CardHeader>
-          <CardTitle>Upcoming Appointments</CardTitle>
+          <CardTitle>Your Appointments</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {upcomingAppointments.map((appointment) => (
-              <div key={appointment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="space-y-1">
-                  <h4 className="font-medium">{appointment.service}</h4>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {appointment.date}
+            {appointments.length > 0 ? (
+              appointments.map((appointment) => (
+                <div key={appointment.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="space-y-1">
+                    <h4 className="font-medium">{getServiceName(appointment.service_type)}</h4>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {new Date(appointment.appointment_date).toLocaleDateString()}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {appointment.appointment_time}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {appointment.time}
-                    </div>
+                    {appointment.purpose && (
+                      <p className="text-sm text-muted-foreground">
+                        Purpose: {appointment.purpose}
+                      </p>
+                    )}
                   </div>
-                  <p className="text-sm">
-                    With: {appointment.with} • {appointment.location}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={appointment.status === "confirmed" ? "default" : appointment.status === "pending" ? "secondary" : "outline"}>
+                      {appointment.status}
+                    </Badge>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleReschedule(appointment.id)}
+                      disabled={appointment.status === 'rescheduled'}
+                    >
+                      Reschedule
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={appointment.status === "confirmed" ? "default" : "secondary"}>
-                    {appointment.status}
-                  </Badge>
-                  <Button size="sm" variant="outline">
-                    Reschedule
-                  </Button>
-                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">No Appointments</h3>
+                <p className="text-muted-foreground">
+                  You don't have any appointments scheduled yet.
+                </p>
               </div>
-            ))}
+            )}
           </div>
         </CardContent>
       </Card>

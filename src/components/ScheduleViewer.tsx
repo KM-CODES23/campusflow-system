@@ -1,59 +1,35 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, MapPin } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar, Clock, MapPin, Plus } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import type { Tables } from "@/integrations/supabase/types";
+
+type Schedule = Tables<"schedules">;
 
 const ScheduleViewer = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [selectedDay, setSelectedDay] = useState("monday");
-
-  const schedule = {
-    monday: [
-      {
-        id: 1,
-        course: "Computer Science 101",
-        time: "09:00 - 10:30",
-        location: "SCI Building, Room 205",
-        instructor: "Dr. Smith",
-        type: "Lecture"
-      },
-      {
-        id: 2,
-        course: "Mathematics 201",
-        time: "11:00 - 12:30",
-        location: "ENG Building, Room 101",
-        instructor: "Prof. Johnson",
-        type: "Tutorial"
-      },
-      {
-        id: 3,
-        course: "Physics Lab",
-        time: "14:00 - 16:00",
-        location: "SCI Building, Lab 3",
-        instructor: "Dr. Brown",
-        type: "Lab"
-      }
-    ],
-    tuesday: [
-      {
-        id: 4,
-        course: "Database Systems",
-        time: "10:00 - 11:30",
-        location: "ENG Building, Room 301",
-        instructor: "Dr. Davis",
-        type: "Lecture"
-      },
-      {
-        id: 5,
-        course: "Software Engineering",
-        time: "13:00 - 14:30",
-        location: "SCI Building, Room 150",
-        instructor: "Prof. Wilson",
-        type: "Seminar"
-      }
-    ]
-  };
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newSchedule, setNewSchedule] = useState({
+    course: "",
+    time: "",
+    location: "",
+    instructor: "",
+    type: "Lecture",
+    day_of_week: "monday"
+  });
 
   const days = [
     { key: "monday", label: "Monday" },
@@ -63,7 +39,81 @@ const ScheduleViewer = () => {
     { key: "friday", label: "Friday" }
   ];
 
-  const currentSchedule = schedule[selectedDay as keyof typeof schedule] || [];
+  useEffect(() => {
+    if (user) {
+      fetchSchedules();
+    }
+  }, [user]);
+
+  const fetchSchedules = async () => {
+    if (!user) return;
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('schedules')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('time');
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch schedules",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSchedules(data || []);
+    } catch (error) {
+      console.error('Error fetching schedules:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddSchedule = async () => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('schedules')
+        .insert({
+          ...newSchedule,
+          user_id: user.id
+        });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to add schedule",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Success",
+        description: "Schedule added successfully!",
+      });
+
+      setIsAddDialogOpen(false);
+      setNewSchedule({
+        course: "",
+        time: "",
+        location: "",
+        instructor: "",
+        type: "Lecture",
+        day_of_week: "monday"
+      });
+      fetchSchedules();
+    } catch (error) {
+      console.error('Error adding schedule:', error);
+    }
+  };
+
+  const currentSchedule = schedules.filter(schedule => schedule.day_of_week === selectedDay);
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -75,21 +125,121 @@ const ScheduleViewer = () => {
     }
   };
 
+  if (isLoading) {
+    return <div className="text-center py-8">Loading schedules...</div>;
+  }
+
   return (
     <div className="space-y-6">
-      {/* Day Selector */}
-      <div className="flex flex-wrap gap-2">
-        {days.map((day) => (
-          <Button
-            key={day.key}
-            variant={selectedDay === day.key ? "default" : "outline"}
-            onClick={() => setSelectedDay(day.key)}
-            className="flex items-center gap-2"
-          >
-            <Calendar className="h-4 w-4" />
-            {day.label}
-          </Button>
-        ))}
+      {/* Day Selector and Add Button */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap gap-2">
+          {days.map((day) => (
+            <Button
+              key={day.key}
+              variant={selectedDay === day.key ? "default" : "outline"}
+              onClick={() => setSelectedDay(day.key)}
+              className="flex items-center gap-2"
+            >
+              <Calendar className="h-4 w-4" />
+              {day.label}
+            </Button>
+          ))}
+        </div>
+        
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Schedule
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Schedule</DialogTitle>
+              <DialogDescription>
+                Add a new class to your schedule
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="course">Course Name</Label>
+                <Input
+                  id="course"
+                  value={newSchedule.course}
+                  onChange={(e) => setNewSchedule({...newSchedule, course: e.target.value})}
+                  placeholder="e.g., Computer Science 101"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="time">Time</Label>
+                  <Input
+                    id="time"
+                    value={newSchedule.time}
+                    onChange={(e) => setNewSchedule({...newSchedule, time: e.target.value})}
+                    placeholder="e.g., 09:00 - 10:30"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="day">Day</Label>
+                  <Select value={newSchedule.day_of_week} onValueChange={(value) => setNewSchedule({...newSchedule, day_of_week: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {days.map((day) => (
+                        <SelectItem key={day.key} value={day.key}>
+                          {day.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  value={newSchedule.location}
+                  onChange={(e) => setNewSchedule({...newSchedule, location: e.target.value})}
+                  placeholder="e.g., SCI Building, Room 205"
+                />
+              </div>
+              <div>
+                <Label htmlFor="instructor">Instructor</Label>
+                <Input
+                  id="instructor"
+                  value={newSchedule.instructor}
+                  onChange={(e) => setNewSchedule({...newSchedule, instructor: e.target.value})}
+                  placeholder="e.g., Dr. Smith"
+                />
+              </div>
+              <div>
+                <Label htmlFor="type">Type</Label>
+                <Select value={newSchedule.type} onValueChange={(value) => setNewSchedule({...newSchedule, type: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Lecture">Lecture</SelectItem>
+                    <SelectItem value="Tutorial">Tutorial</SelectItem>
+                    <SelectItem value="Lab">Lab</SelectItem>
+                    <SelectItem value="Seminar">Seminar</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleAddSchedule}>
+                  Add Schedule
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Schedule Cards */}

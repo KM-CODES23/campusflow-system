@@ -1,171 +1,343 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Star, MessageSquare, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import type { Tables } from "@/integrations/supabase/types";
+
+type Feedback = Tables<"feedback">;
 
 const FeedbackSystem = () => {
-  const [feedbackType, setFeedbackType] = useState("");
-  const [priority, setPriority] = useState("medium");
-  const [rating, setRating] = useState("");
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [feedback, setFeedback] = useState<Feedback[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [newFeedback, setNewFeedback] = useState({
+    feedback_type: "",
+    subject: "",
+    description: "",
+    priority: "medium",
+    rating: 0
+  });
 
   const feedbackTypes = [
-    { id: "bug", name: "Bug Report", description: "Report technical issues" },
-    { id: "suggestion", name: "Suggestion", description: "Suggest improvements" },
-    { id: "compliment", name: "Compliment", description: "Share positive feedback" },
-    { id: "complaint", name: "Complaint", description: "Report problems or concerns" },
-    { id: "feature", name: "Feature Request", description: "Request new features" }
+    { id: "suggestion", name: "Suggestion", description: "Ideas for improvement" },
+    { id: "complaint", name: "Complaint", description: "Report issues or problems" },
+    { id: "compliment", name: "Compliment", description: "Positive feedback" },
+    { id: "bug_report", name: "Bug Report", description: "Technical issues" },
+    { id: "feature_request", name: "Feature Request", description: "Request new features" }
   ];
 
-  const recentFeedback = [
-    {
-      id: 1,
-      type: "Bug Report",
-      subject: "Map navigation not working in Science Building",
-      status: "In Progress",
-      date: "2024-06-25",
-      response: "Our team is investigating this issue. Thank you for reporting!"
-    },
-    {
-      id: 2,
-      type: "Suggestion",
-      subject: "Add dark mode to the app",
-      status: "Under Review",
-      date: "2024-06-24",
-      response: null
+  const priorities = [
+    { value: "low", label: "Low", color: "secondary" },
+    { value: "medium", label: "Medium", color: "default" },
+    { value: "high", label: "High", color: "destructive" }
+  ];
+
+  useEffect(() => {
+    if (user) {
+      fetchFeedback();
     }
-  ];
+  }, [user]);
 
-  const handleSubmitFeedback = () => {
-    console.log("Submitting feedback:", { feedbackType, priority, rating });
-    // Here you would normally send the data to your backend
+  const fetchFeedback = async () => {
+    if (!user) return;
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('feedback')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch feedback",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setFeedback(data || []);
+    } catch (error) {
+      console.error('Error fetching feedback:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const handleSubmitFeedback = async () => {
+    if (!user || !newFeedback.feedback_type || !newFeedback.subject || !newFeedback.description) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('feedback')
+        .insert({
+          user_id: user.id,
+          feedback_type: newFeedback.feedback_type,
+          subject: newFeedback.subject,
+          description: newFeedback.description,
+          priority: newFeedback.priority,
+          rating: newFeedback.rating > 0 ? newFeedback.rating : null,
+          status: 'under_review'
+        });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to submit feedback",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Success",
+        description: "Feedback submitted successfully!",
+      });
+
+      // Reset form
+      setNewFeedback({
+        feedback_type: "",
+        subject: "",
+        description: "",
+        priority: "medium",
+        rating: 0
+      });
+
+      fetchFeedback();
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'under_review':
+        return <Clock className="h-4 w-4" />;
+      case 'in_progress':
+        return <AlertCircle className="h-4 w-4" />;
+      case 'resolved':
+        return <CheckCircle className="h-4 w-4" />;
+      default:
+        return <MessageSquare className="h-4 w-4" />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'under_review':
+        return 'secondary';
+      case 'in_progress':
+        return 'default';
+      case 'resolved':
+        return 'secondary';
+      default:
+        return 'outline';
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    const priorityItem = priorities.find(p => p.value === priority);
+    return priorityItem?.color || 'default';
+  };
+
+  const renderStarRating = (rating: number, interactive: boolean = false) => {
+    return (
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`h-4 w-4 ${
+              star <= rating
+                ? 'fill-yellow-400 text-yellow-400'
+                : 'text-gray-300'
+            } ${interactive ? 'cursor-pointer hover:text-yellow-400' : ''}`}
+            onClick={interactive ? () => setNewFeedback({...newFeedback, rating: star}) : undefined}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  if (isLoading) {
+    return <div className="text-center py-8">Loading feedback...</div>;
+  }
 
   return (
     <div className="space-y-6">
-      {/* Submit New Feedback */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Submit Feedback</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="feedback-type">Feedback Type</Label>
-              <Select value={feedbackType} onValueChange={setFeedbackType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select feedback type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {feedbackTypes.map((type) => (
-                    <SelectItem key={type.id} value={type.id}>
-                      <div>
-                        <div className="font-medium">{type.name}</div>
-                        <div className="text-sm text-muted-foreground">{type.description}</div>
+      <Tabs defaultValue="submit" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="submit">Submit Feedback</TabsTrigger>
+          <TabsTrigger value="history">Feedback History</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="submit">
+          <Card>
+            <CardHeader>
+              <CardTitle>Submit New Feedback</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="type">Feedback Type</Label>
+                  <Select value={newFeedback.feedback_type} onValueChange={(value) => setNewFeedback({...newFeedback, feedback_type: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select feedback type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {feedbackTypes.map((type) => (
+                        <SelectItem key={type.id} value={type.id}>
+                          <div>
+                            <div className="font-medium">{type.name}</div>
+                            <div className="text-sm text-muted-foreground">{type.description}</div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="priority">Priority</Label>
+                  <Select value={newFeedback.priority} onValueChange={(value) => setNewFeedback({...newFeedback, priority: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {priorities.map((priority) => (
+                        <SelectItem key={priority.value} value={priority.value}>
+                          {priority.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="subject">Subject</Label>
+                <Input
+                  id="subject"
+                  value={newFeedback.subject}
+                  onChange={(e) => setNewFeedback({...newFeedback, subject: e.target.value})}
+                  placeholder="Brief description of your feedback"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={newFeedback.description}
+                  onChange={(e) => setNewFeedback({...newFeedback, description: e.target.value})}
+                  placeholder="Provide detailed information about your feedback..."
+                  className="min-h-32"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Rating (Optional)</Label>
+                <div className="flex items-center gap-2">
+                  {renderStarRating(newFeedback.rating, true)}
+                  <span className="text-sm text-muted-foreground">
+                    {newFeedback.rating > 0 ? `${newFeedback.rating} out of 5 stars` : 'No rating'}
+                  </span>
+                </div>
+              </div>
+
+              <Button 
+                onClick={handleSubmitFeedback}
+                disabled={!newFeedback.feedback_type || !newFeedback.subject || !newFeedback.description}
+                className="w-full"
+              >
+                Submit Feedback
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="history">
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Feedback History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {feedback.length > 0 ? (
+                  feedback.map((item) => (
+                    <div key={item.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <h4 className="font-medium">{item.subject}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {feedbackTypes.find(t => t.id === item.feedback_type)?.name || item.feedback_type}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={getPriorityColor(item.priority)}>
+                            {item.priority}
+                          </Badge>
+                          <Badge variant={getStatusColor(item.status)} className="flex items-center gap-1">
+                            {getStatusIcon(item.status)}
+                            {item.status.replace('_', ' ')}
+                          </Badge>
+                        </div>
                       </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="priority">Priority Level</Label>
-              <Select value={priority} onValueChange={setPriority}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low - Minor issue or suggestion</SelectItem>
-                  <SelectItem value="medium">Medium - Important but not urgent</SelectItem>
-                  <SelectItem value="high">High - Urgent issue affecting usage</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+                      <p className="text-sm">{item.description}</p>
 
-          <div className="space-y-2">
-            <Label htmlFor="subject">Subject</Label>
-            <Input placeholder="Brief summary of your feedback..." />
-          </div>
+                      {item.rating && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">Your rating:</span>
+                          {renderStarRating(item.rating)}
+                        </div>
+                      )}
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              placeholder="Please provide detailed information about your feedback..."
-              className="min-h-24"
-            />
-          </div>
+                      {item.response && (
+                        <div className="bg-muted p-3 rounded-md">
+                          <h5 className="font-medium text-sm mb-1">Response:</h5>
+                          <p className="text-sm">{item.response}</p>
+                        </div>
+                      )}
 
-          <div className="space-y-3">
-            <Label>Overall Rating (Optional)</Label>
-            <RadioGroup value={rating} onValueChange={setRating} className="flex space-x-6">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="1" id="rating-1" />
-                <Label htmlFor="rating-1">1 - Poor</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="2" id="rating-2" />
-                <Label htmlFor="rating-2">2 - Fair</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="3" id="rating-3" />
-                <Label htmlFor="rating-3">3 - Good</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="4" id="rating-4" />
-                <Label htmlFor="rating-4">4 - Very Good</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="5" id="rating-5" />
-                <Label htmlFor="rating-5">5 - Excellent</Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          <Button onClick={handleSubmitFeedback} className="w-full">
-            Submit Feedback
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Previous Feedback */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Previous Feedback</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {recentFeedback.map((feedback) => (
-              <div key={feedback.id} className="p-4 border rounded-lg space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium">{feedback.subject}</h4>
-                  <Badge variant="outline">{feedback.status}</Badge>
-                </div>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span>{feedback.type}</span>
-                  <span>•</span>
-                  <span>{feedback.date}</span>
-                </div>
-                {feedback.response && (
-                  <div className="mt-3 p-3 bg-muted rounded-lg">
-                    <div className="flex items-start gap-2">
-                      <MessageSquare className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                      <p className="text-sm">{feedback.response}</p>
+                      <div className="text-xs text-muted-foreground">
+                        Submitted on {new Date(item.created_at).toLocaleDateString()}
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <MessageSquare className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <h3 className="text-lg font-semibold mb-2">No Feedback Yet</h3>
+                    <p className="text-muted-foreground">
+                      You haven't submitted any feedback yet. Use the "Submit Feedback" tab to get started.
+                    </p>
                   </div>
                 )}
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

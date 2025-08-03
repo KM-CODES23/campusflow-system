@@ -1,16 +1,18 @@
-
+import img2 from '../assets/imgs/login/img2.jpg';
+import img3 from '../assets/imgs/login/img3.jpg';
+import img4 from '../assets/imgs/login/img4.jpg';
+import profile from '../assets/imgs/login/profile.jpeg';
 import { useState, useEffect } from 'react';
 
 const backgroundImages = [
-  'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=1920&h=1080&fit=crop&crop=center',
-  'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=1920&h=1080&fit=crop&crop=center',
-  'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1920&h=1080&fit=crop&crop=center',
-  'https://images.unsplash.com/photo-1470813740244-df37b8c1edcb?w=1920&h=1080&fit=crop&crop=center',
-  'https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=1920&h=1080&fit=crop&crop=center',
-  'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1920&h=1080&fit=crop&crop=center',
-  'https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?w=1920&h=1080&fit=crop&crop=center',
-  'https://images.unsplash.com/photo-1492321936769-b49830bc1d1e?w=1920&h=1080&fit=crop&crop=center'
+ 
+  img2,
+  img4,
+  
+  
 ];
+
+
 
 const BackgroundSlideshow = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);

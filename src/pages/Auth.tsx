@@ -152,7 +152,7 @@ const Auth = () => {
     <div className="min-h-screen relative flex items-center justify-center p-4">
       <BackgroundSlideshow />
       <div className="w-full max-w-md relative z-10">
-        <Card className="backdrop-blur-sm bg-background/95 border border-white/20 shadow-2xl">
+        <Card className="backdrop-blur-sm bg-background/85 border border-white/20 shadow-2xl">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
               <div>
@@ -161,7 +161,7 @@ const Auth = () => {
             </div>
            
             <CardDescription className="text-foreground/90">
-              Your Campus Compass Guide
+             Your Campus Compass Guide
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -174,6 +174,7 @@ const Auth = () => {
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
+                    <h1 className="text-2xl font-bold text-foreground/90">Welcome Back</h1>
                     <Label htmlFor="login-email">Email</Label>
                     <Input
                       id="login-email"

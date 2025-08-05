@@ -99,7 +99,8 @@ const Index = () => {
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
         {/* Mobile-Optimized Header */}
-        <header className="sticky top-0 z-50 border-b bg-card/100 backdrop-blur supports-[backdrop-filter]:bg-card/75 shadow-sm">
+        <header className="sticky top-0 z-50 border-b bg-[var(--primary)] backdrop-brightness-50 supports-[backdrop-filter]:bg-white shadow-sm">
+
           <div className="container mx-auto px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
